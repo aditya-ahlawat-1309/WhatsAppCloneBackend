@@ -4,8 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix chat-app && npm run build --prefix chat-app"
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
