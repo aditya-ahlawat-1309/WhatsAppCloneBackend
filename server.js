@@ -6,21 +6,28 @@ const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const path = require("path");
-
+const cors = require("cors");
 dotenv.config();
 connectDB();
 const app = express();
 
 app.use(express.json()); // to accept json data
 
-app.use(function (req,res,next) {
-  res.header(
-    "Access-Control-Allow-Origin",
-    "https://chatfullstack.netlify.app/"
-  );
-  res.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+app.use(
+  cors({
+    origin: "https://chatfullstack.netlify.app",
+    credentials: true,
+  })
+);
+
+// app.use(function (req,res,next) {
+//   res.header(
+//     "Access-Control-Allow-Origin",
+//     "https://chatfullstack.netlify.app/"
+//   );
+//   res.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
+//   next();
+// });
 
 // app.get("/", (req, res) => {
 //   res.send("API Running!");
