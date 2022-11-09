@@ -1,3 +1,4 @@
+// require modules
 const express = require("express");
 const connectDB = require("./config/db");
 const dotenv = require("dotenv");
@@ -7,15 +8,24 @@ const messageRoutes = require("./routes/messageRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const path = require("path");
 
+// to use dotenv files
 dotenv.config();
+
+// to connect to database
 connectDB();
+
+// express.use() becomes app.use()
 const app = express();
 
-app.use(express.json()); // to accept json data
+// to accept json data
+app.use(express.json()); 
 
 
+///////////////////////////////////////////////////////////////////////////////
 
 //Cors Configuration - Start
+// always use this to remove CORS Error
+
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
@@ -27,47 +37,25 @@ app.use(function (req, res, next) {
 });
 //Cors Configuration - End
 
-
-
-// Add headers before the routes are defined
-// app.use(function (req, res, next) {
-
-//     // Website you wish to allow to connect
-//     res.setHeader(
-//       "Access-Control-Allow-Origin",
-//       "https://chatfullstack.netlify.app"
-//     );
-
-//     // Request methods you wish to allow
-//     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-
-//     // Request headers you wish to allow
-//     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-
-//     // Set to true if you need the website to include cookies in the requests sent
-//     // to the API (e.g. in case you use sessions)
-//     res.setHeader('Access-Control-Allow-Credentials', true);
-
-//     // Pass to next layer of middleware
-//     next();
-// });
-
-// app.use(function (req,res,next) {
-//   res.header(
-//     "Access-Control-Allow-Origin",
-//     "https://chatfullstack.netlify.app/"
-//   );
-//   res.header("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
-//   next();
-// });
+//////////////////////////////////////////////////////////////////////////////////
 
 // app.get("/", (req, res) => {
 //   res.send("API Running!");
 // });
 
+
+// function is userRoutes and path is /api/user
 app.use("/api/user", userRoutes);
+
+// function is charRoutes and path is /api/chat
 app.use("/api/chat", chatRoutes);
+
+//function is messageRoutes and path is /api/message
 app.use("/api/message", messageRoutes);
+
+
+
+
 
 // --------------------------deployment------------------------------
 
@@ -87,19 +75,32 @@ app.use("/api/message", messageRoutes);
 
 // --------------------------deployment------------------------------
 
+
+
+
+
 // Error Handling middlewares
+// if any error occurs then these are thrown up
 app.use(notFound);
 app.use(errorHandler);
 
+
+// get PORT value from dotenv (process.env.PORT) and if that is not available then PORT = 5000
 const PORT = process.env.PORT || 5000;
 
 
-
+// run server and listen everything on PORT Number - here (PORT = 5000)
+// consoles.log the PORT number
 const server = app.listen(
   PORT,
   console.log(`Server running on PORT ${PORT}...`.yellow.bold)
 );
 
+// At a given interval (the pingInterval value sent in the handshake) the server sends a PING packet 
+// and the client has a few seconds (the pingTimeout value) to send a PONG packet back. 
+// If the server does not receive a PONG packet back, it will consider that the connection is closed
+
+// origin:"*" means listen from every source no matter what  = (earlier https:localhost:3000 (will listen only from localhost 3000) )
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {
@@ -107,6 +108,9 @@ const io = require("socket.io")(server, {
   },
 });
 
+
+
+// connect socket.io and turn it on
 io.on("connection", (socket) => {
   console.log("Connected to socket.io");
   socket.on("setup", (userData) => {
@@ -114,25 +118,35 @@ io.on("connection", (socket) => {
     socket.emit("connected");
   });
 
+  // join chat and console.log the room name
   socket.on("join chat", (room) => {
     socket.join(room);
     console.log("User Joined Room: " + room);
   });
+
+  // if typing then emit the packet that the person is typing
   socket.on("typing", (room) => socket.in(room).emit("typing"));
+
+  // if stops typing then emit the packet that the person has stopped typing
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
+  // if message recieved (new packet with some info) then put it in chat
   socket.on("new message", (newMessageRecieved) => {
     var chat = newMessageRecieved.chat;
 
+    // if user is not defined then console.log
     if (!chat.users) return console.log("chat.users not defined");
 
+    // if id matches with the sender id then return the message and emit the packet that the message has received
     chat.users.forEach((user) => {
       if (user._id == newMessageRecieved.sender._id) return;
 
+      // receive the emit that message has been received
       socket.in(user._id).emit("message recieved", newMessageRecieved);
     });
   });
 
+  // if socket is off then console and leave
   socket.off("setup", () => {
     console.log("USER DISCONNECTED");
     socket.leave(userData._id);
